@@ -1,0 +1,34 @@
+version: '3.6'
+services:
+  grafana:
+    image: grafana/grafana
+    restart: unless-stopped
+    networks:
+      - traefik_public
+    environment:
+      - GF_SECURITY_ADMIN_USER=${grafana_admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${grafana_password}
+    volumes:
+      - grafana_data:/var/lib/grafana
+    deploy:
+      replicas: 1
+      labels:
+        # Habilita Traefik
+        - "traefik.enable=true"
+        # Regra de roteamento
+        - "traefik.http.routers.grafana.rule=Host(`grafana.resulta.cloud`)"
+        # EntryPoint HTTPS
+        - "traefik.http.routers.grafana.entrypoints=websecure"
+        # Certificado SSL
+        - "traefik.http.routers.grafana.tls.certresolver=le"
+        # Porta do serviço
+        - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+        # Passa Host header
+        - "traefik.http.services.grafana.loadbalancer.passHostHeader=true"
+
+networks:
+  traefik_public:
+    external: true
+
+volumes:
+  grafana_data:
